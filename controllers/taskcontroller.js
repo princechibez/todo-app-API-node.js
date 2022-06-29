@@ -15,7 +15,7 @@ exports.postAddTask = (req, res, next) => {
       Tasks.find()
         .select("title description timestamp")
         .then((tasks) => {
-          res.json({ feedBack: "Task deleted successfully", newData: tasks });
+          res.json({ feedBack: "Task has been successfully created", newData: tasks });
         });
     })
     .catch((err) => {
