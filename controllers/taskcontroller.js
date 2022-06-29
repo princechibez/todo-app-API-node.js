@@ -12,7 +12,11 @@ exports.postAddTask = (req, res, next) => {
   task
     .save()
     .then((result) => {
-      res.json("Task was created Successfully.");
+      Tasks.find()
+        .select("title description timestamp")
+        .then((tasks) => {
+          res.json({ feedBack: "Task deleted successfully", newData: tasks });
+        });
     })
     .catch((err) => {
       res.json("There was a problem creating the task, try again later");
@@ -22,6 +26,7 @@ exports.postAddTask = (req, res, next) => {
 
 exports.getAllTasks = (req, res, next) => {
   Tasks.find()
+    .select("title description timestamp")
     .then((tasks) => {
       if (tasks.length === 0) {
         res.json("You dont have any tasks.");
@@ -33,26 +38,40 @@ exports.getAllTasks = (req, res, next) => {
 };
 
 exports.updateTask = (req, res, next) => {
-  const urlParams = +req.params.taskIndex;
+  const urlParams = req.params.taskIndex;
   let title = req.body.title;
   let description = req.body.description;
   let timestamp = req.body.timestamp;
 
-  Tasks.find().then((tasks) => {
-    let taskToUpdate = tasks.find((task) => tasks.indexOf(task) === urlParams);
-    taskToUpdate.title = title;
-    taskToUpdate.description = description;
-    taskToUpdate.timestamp = timestamp;
-    taskToUpdate.save();
-    res.json({ response: "Task updated successfully", newData: tasks });
+  Tasks.findById(urlParams).then((task) => {
+    // let updatedTask = Tasks.find().select("title description timestamp")
+    task.title = title;
+    task.description = description;
+    task.timestamp = timestamp;
+    task.save();
+    Tasks.find()
+      .select("title description timestamp")
+      .then((newTasks) => {
+        res.json({ feedBack: "Task updated successfully", newData: newTasks });
+      })
+      .catch((err) => console.log(err));
   });
 };
 
 exports.deleteTask = (req, res, next) => {
   let params = req.params.taskIndex;
-  Tasks.find().then((tasks) => {
-    let taskToDelete = tasks.find((task) => tasks.indexOf(task) === params);
-    Tasks.deleteOne(taskToDelete, (err) => console.log(err));
-    res.json("Task deleted successfully");
+  Tasks.findByIdAndRemove(params).then(() => {
+    // let taskToDelete = tasks.find((task) => tasks.indexOf(task) === params);
+    // Tasks.deleteOne(taskToDelete, (err) => console.log(err));
+    Tasks.find().then((newTasks) => {
+      if (newTasks.length > 0) {
+        res.json({ feedBack: "Task deleted successfully", newData: newTasks });
+      } else {
+        res.json({
+          feedBack: "Task deleted successfully",
+          newData: "No tasks left",
+        });
+      }
+    });
   });
 };
